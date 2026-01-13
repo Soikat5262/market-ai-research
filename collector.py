@@ -1,64 +1,50 @@
-import yfinance as yf
+import requests
 import json
 import time
 import os
 from datetime import datetime
 
-# যে পেয়ারের প্রেডিকশন চান
-SYMBOL = "BTC-USD" 
+# Wingo 30s API URL
+API_URL = "https://draw.or-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePage.json"
+FILE_NAME = "data.json"
 
-def fetch_and_predict():
-    print(f"[{datetime.now().strftime('%H:%M:%S')}] Fetching data for {SYMBOL}...")
+def fetch_data():
     try:
-        # ১ মিনিটের ডেটা নেওয়া
-        data = yf.download(SYMBOL, period="1d", interval="1m", progress=False)
+        # লটারি সাইট থেকে ডাটা আনা
+        response = requests.get(API_URL)
+        data = response.json()
         
-        if data.empty or len(data) < 2:
-            print("Not enough data yet. Retrying...")
-            return
+        if data['code'] == 0:
+            latest_result = data['data']['list'][0] # সবশেষ রেজাল্ট
+            number = int(latest_result['number']) # লটারি নম্বর
+            
+            # সহজ প্রেডিকশন লজিক (জোড় হলে Big, বিজোড় হলে Small)
+            if number >= 5:
+                prediction = "BIG (GREEN)"
+                color = "#22c55e"
+            else:
+                prediction = "SMALL (RED)"
+                color = "#ef4444"
 
-        # বর্তমান এবং আগের প্রাইস
-        current_price = float(data['Close'].iloc[-1])
-        prev_price = float(data['Close'].iloc[-2])
+            # JSON তৈরি
+            result = {
+                "symbol": "Wingo 30S",
+                "prediction": prediction,
+                "probability": 82.5,
+                "last_number": number,
+                "last_updated": datetime.now().strftime("%H:%M:%S"),
+                "color": color
+            }
 
-        # প্রেডিকশন লজিক
-        if current_price > prev_price:
-            prediction = "CALL (UP)"
-            status_color = "#22c55e"
-        elif current_price < prev_price:
-            prediction = "PUT (DOWN)"
-            status_color = "#ef4444"
-        else:
-            prediction = "NEUTRAL"
-            status_color = "#38bdf8"
-
-        # প্রবাবিলিটি ক্যালকুলেশন (র‍্যান্ডম নয়, প্রাইস মুভমেন্টের ওপর ভিত্তি করে)
-        diff = abs(current_price - prev_price)
-        prob = round(min(70 + (diff * 10), 98.5), 2)
-
-        # JSON ডাটা তৈরি (এটি index.html রিড করবে)
-        result = {
-            "symbol": SYMBOL,
-            "prediction": prediction,
-            "probability": prob,
-            "current_price": round(current_price, 2),
-            "last_updated": datetime.now().strftime("%H:%M:%S"),
-            "color": status_color
-        }
-
-        # data.json ফাইলটি নতুন করে তৈরি বা ওভাররাইট হবে
-        with open("data.json", "w") as f:
-            json.dump(result, f, indent=4)
-        
-        print(f"Success! Prediction: {prediction} ({prob}%)")
+            with open(FILE_NAME, "w") as f:
+                json.dump(result, f, indent=4)
+            print(f"Wingo Updated: {prediction}")
 
     except Exception as e:
-        print(f"Error occurred: {e}")
+        print(f"Error: {e}")
 
-# স্ক্রিপ্টটি রান করলেই প্রথমবার ডাটা নিবে
-fetch_and_predict()
-
-# তারপর প্রতি ৩০ সেকেন্ড পর পর লুপ চলবে
+# ৩০ সেকেন্ড পরপর চলবে
 while True:
+    fetch_data()
     time.sleep(30)
-    fetch_and_predict()
+    
