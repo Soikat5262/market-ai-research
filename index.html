@@ -1,58 +1,72 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Market Predictor</title>
+    <title>AI Researcher Pro</title>
     <style>
-        body { font-family: Arial, sans-serif; background: #0f172a; color: white; text-align: center; padding: 20px; }
-        .card { background: #1e293b; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); display: inline-block; width: 90%; max-width: 400px; }
-        .result { font-size: 24px; font-weight: bold; margin: 20px 0; color: #10b981; }
-        .prediction { font-size: 40px; margin: 10px 0; text-transform: uppercase; letter-spacing: 2px; }
-        .small { color: #f87171; }
-        .big { color: #60a5fa; }
-        .footer { font-size: 12px; color: #94a3b8; margin-top: 20px; }
+        body { background-color: #0f172a; color: white; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .container { background: #1e293b; padding: 40px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); text-align: center; width: 350px; border: 1px solid #334155; }
+        h1 { font-size: 20px; color: #38bdf8; text-transform: uppercase; margin-bottom: 25px; }
+        .price { font-size: 14px; color: #94a3b8; }
+        .prediction { font-size: 35px; font-weight: bold; margin: 20px 0; min-height: 45px; }
+        .prob-box { font-size: 18px; margin-bottom: 20px; }
+        .timer-bg { width: 100%; height: 6px; background: #334155; border-radius: 10px; overflow: hidden; }
+        .timer-fill { height: 100%; background: #38bdf8; width: 0%; transition: width 1s linear; }
+        .update-time { font-size: 11px; color: #64748b; margin-top: 15px; }
     </style>
 </head>
 <body>
-    <h1>AI RESEARCHER</h1>
-    <div class="card">
-        <div id="status">Analyzing Market Data...</div>
-        <div class="result">Next Period Prediction:</div>
-        <div id="predict" class="prediction">--</div>
-        <div id="prob">Probability: --%</div>
+
+<div class="container">
+    <h1>AI Researcher</h1>
+    <div id="symbol" class="price">Connecting to Market...</div>
+    
+    <div id="prediction" class="prediction">--</div>
+    
+    <div class="prob-box">Probability: <span id="prob">0</span>%</div>
+    
+    <div class="timer-bg">
+        <div id="fill" class="timer-fill"></div>
     </div>
-    <div class="footer">Data updates every 10 minutes automatically</div>
+    
+    <div class="update-time">Last Sync: <span id="sync">--</span></div>
+</div>
 
-    <script>
-        async function analyzeData() {
-            try {
-                const response = await fetch('data.json');
-                const data = await response.json();
-                
-                if (data.length < 5) {
-                    document.getElementById('status').innerText = "Insufficient Data (Waiting for more...)";
-                    return;
-                }
+<script>
+    let timeLeft = 0;
 
-                // AI Logic: Simple Pattern Recognition
-                let lastFive = data.slice(-5).map(item => parseInt(item.num) >= 5 ? 'BIG' : 'SMALL');
-                let bigCount = lastFive.filter(x => x === 'BIG').length;
-                
-                let nextMove = bigCount >= 3 ? 'SMALL' : 'BIG'; // Anti-trend Logic
-                let probability = 70 + (Math.random() * 15); // Simulated Confidence
-
-                document.getElementById('status').innerText = "Analysis Complete ✅";
-                const predDiv = document.getElementById('predict');
-                predDiv.innerText = nextMove;
-                predDiv.className = 'prediction ' + nextMove.toLowerCase();
-                document.getElementById('prob').innerText = `Probability: ${probability.toFixed(2)}%`;
-
-            } catch (e) {
-                document.getElementById('status').innerText = "Error loading data.";
-            }
+    async function loadData() {
+        try {
+            // ক্যাশ সমস্যা এড়াতে টাইtimestamp যোগ করা হয়েছে
+            const response = await fetch('data.json?t=' + new Date().getTime());
+            const data = await response.json();
+            
+            document.getElementById('symbol').innerText = data.symbol + " : $" + data.current_price;
+            const predDiv = document.getElementById('prediction');
+            predDiv.innerText = data.prediction;
+            predDiv.style.color = data.color;
+            document.getElementById('prob').innerText = data.probability;
+            document.getElementById('sync').innerText = data.last_updated;
+        } catch (err) {
+            console.log("Waiting for data.json file...");
         }
-        analyzeData();
-    </script>
+    }
+
+    // প্রতি ১ সেকেন্ডে টাইমার আপডেট হবে
+    setInterval(() => {
+        timeLeft += (100 / 30);
+        document.getElementById('fill').style.width = timeLeft + "%";
+        
+        if (timeLeft >= 100) {
+            timeLeft = 0;
+            loadData(); // ৩০ সেকেন্ড পূর্ণ হলে ডাটা লোড হবে
+        }
+    }, 1000);
+
+    // পেজ লোড হওয়ার সাথে সাথেই একবার ডাটা দেখাবে
+    loadData();
+</script>
 </body>
 </html>
+
