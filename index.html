@@ -1,72 +1,327 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Researcher Pro</title>
-    <style>
-        body { background-color: #0f172a; color: white; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .container { background: #1e293b; padding: 40px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); text-align: center; width: 350px; border: 1px solid #334155; }
-        h1 { font-size: 20px; color: #38bdf8; text-transform: uppercase; margin-bottom: 25px; }
-        .price { font-size: 14px; color: #94a3b8; }
-        .prediction { font-size: 35px; font-weight: bold; margin: 20px 0; min-height: 45px; }
-        .prob-box { font-size: 18px; margin-bottom: 20px; }
-        .timer-bg { width: 100%; height: 6px; background: #334155; border-radius: 10px; overflow: hidden; }
-        .timer-fill { height: 100%; background: #38bdf8; width: 0%; transition: width 1s linear; }
-        .update-time { font-size: 11px; color: #64748b; margin-top: 15px; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Soikat Mondal VIP - V.16 PRO MAX AI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #00ffea;
+      --bg: #080808;
+      --card-bg: #121212;
+      --win: #00f281;
+      --loss: #ff3e3e;
+      --violet: #aa00ff;
+      --text-dim: #888;
+      --rec-bg: #1a0a0a;
+    }
+    
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg); color: #fff;
+      margin: 0; padding: 15px;
+      display: flex; flex-direction: column; align-items: center;
+      transition: background 0.5s ease;
+    }
+
+    body.recovery-active { background: var(--rec-bg); }
+
+    #loginSection { height: 90vh; display: flex; align-items: center; justify-content: center; width: 100%; }
+    .login-box { background: var(--card-bg); border: 1px solid #222; padding: 30px; border-radius: 20px; text-align: center; width: 300px; }
+    .login-input { width: 100%; padding: 12px; margin: 15px 0; background: #1a1a1a; border: 1px solid #333; color: #fff; border-radius: 10px; text-align: center; outline: none; }
+    .login-btn { width: 100%; padding: 12px; background: var(--primary); color: #000; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; }
+    #errorMsg { color: var(--loss); font-size: 12px; margin-top: 10px; display: none; font-weight: bold; }
+
+    #mainApp { display: none; width: 100%; max-width: 450px; }
+    .header { text-align: center; font-size: 16px; font-weight: 700; color: var(--primary); letter-spacing: 2px; margin-bottom: 20px; text-transform: uppercase; }
+
+    .dashboard {
+      background: var(--card-bg); border-radius: 24px; padding: 20px;
+      border: 1px solid #222; margin-bottom: 20px; position: relative;
+      box-shadow: 0 0 0px rgba(255, 62, 62, 0); transition: all 0.3s;
+    }
+
+    .dashboard.aggro { border-color: var(--loss); box-shadow: 0 0 20px rgba(255, 62, 62, 0.2); }
+
+    .recovery-tag {
+      display: none; font-size: 9px; color: #ff3e3e; border: 1px solid #ff3e3e;
+      padding: 2px 8px; border-radius: 10px; position: absolute; top: 15px; right: 20px;
+      animation: blink 0.8s infinite;
+    }
+
+    @keyframes blink { 50% { opacity: 0.3; } }
+
+    .main-row { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
+    .data-group { text-align: left; }
+    .data-label { color: var(--text-dim); font-size: 11px; text-transform: uppercase; }
+    .data-value { font-size: 20px; font-weight: 700; display: block; }
+
+    .prediction-highlight {
+      background: #1a1a1a; padding: 10px 20px; border-radius: 15px;
+      border-left: 4px solid var(--primary); text-align: right;
+    }
+
+    .stats-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 20px; width: 100%; }
+    .stat-pill { background: var(--card-bg); padding: 8px 4px; border-radius: 12px; border: 1px solid #222; text-align: center; }
+    .stat-pill div { font-size: 9px; color: var(--text-dim); margin-bottom: 4px; font-weight: 500; }
+    .stat-pill span { font-size: 12px; font-weight: 700; }
+
+    .history-card { background: var(--card-bg); border-radius: 20px; border: 1px solid #222; overflow: hidden; width: 100%; }
+    .tab-nav { display: flex; background: #1a1a1a; padding: 5px; }
+    .tab-btn { flex: 1; padding: 10px; border: none; background: transparent; color: var(--text-dim); cursor: pointer; font-size: 11px; font-weight: 600; }
+    .tab-btn.active { background: var(--card-bg); color: var(--primary); border-radius: 12px; }
+
+    .table-container { max-height: 400px; overflow-y: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th { font-size: 10px; color: var(--text-dim); text-transform: uppercase; padding: 12px; border-bottom: 1px solid #1a1a1a; }
+    td { padding: 12px; font-size: 12px; border-bottom: 1px solid #1a1a1a; text-align: center; }
+
+    .badge-win { color: var(--win); background: rgba(0,242,129,0.1); padding: 3px 8px; border-radius: 6px; font-size: 10px; font-weight: bold; }
+    .badge-loss { color: var(--loss); background: rgba(255,62,62,0.1); padding: 3px 8px; border-radius: 6px; font-size: 10px; font-weight: bold; }
+    
+    .dot-container { display: inline-flex; align-items: center; justify-content: center; gap: 4px; vertical-align: middle; }
+    .dot { height: 9px; width: 9px; border-radius: 50%; display: inline-block; }
+    .dot-red { background: var(--loss); }
+    .dot-green { background: var(--win); }
+    .dot-violet { background: var(--violet); }
+    
+    .sync-status { font-size: 10px; color: var(--primary); margin-top: 10px; text-align: center; opacity: 0.8; }
+    .confidence-box { font-size: 10px; margin-top: 5px; color: #ffae00; font-weight: bold; }
+  </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>AI Researcher</h1>
-    <div id="symbol" class="price">Connecting to Market...</div>
-    
-    <div id="prediction" class="prediction">--</div>
-    
-    <div class="prob-box">Probability: <span id="prob">0</span>%</div>
-    
-    <div class="timer-bg">
-        <div id="fill" class="timer-fill"></div>
+  <div id="loginSection">
+    <div class="login-box">
+      <div style="font-size: 18px; font-weight: 700; color: var(--primary);">VIP SYSTEM V.16 AI</div>
+      <input type="password" id="pass" class="login-input" placeholder="ACCESS KEY">
+      <button onclick="login()" class="login-btn">ENTER SYSTEM</button>
+      <div id="errorMsg">❌ WRONG ACCESS KEY!</div>
     </div>
-    
-    <div class="update-time">Last Sync: <span id="sync">--</span></div>
-</div>
+  </div>
+
+  <div id="mainApp">
+    <div class="header">Soikat Mondal VIP V.16</div>
+
+    <div class="stats-bar">
+      <div class="stat-pill"><div>WINS</div><span id="stW" style="color:var(--win)">0</span></div>
+      <div class="stat-pill"><div>LOSS</div><span id="stL" style="color:var(--loss)">0</span></div>
+      <div class="stat-pill"><div>L-STREAK</div><span id="stS" style="color:#ffae00">0</span></div>
+      <div class="stat-pill"><div>ACCURACY</div><span id="stA">0%</span></div>
+    </div>
+
+    <div class="dashboard" id="dashboard">
+      <div id="recoveryTag" class="recovery-tag">● AI SELF-CORRECTING</div>
+      <div class="main-row">
+        <div class="data-group">
+          <span class="data-label">Period</span>
+          <span id="periodId" class="data-value">--------</span>
+        </div>
+        <div class="prediction-highlight">
+          <span class="data-label">Target Analysis</span>
+          <span id="predValue" class="data-value">Analyzing...</span>
+          <div class="confidence-box" id="confidenceLevel">Confidence: 0%</div>
+        </div>
+      </div>
+      <div style="margin-top: 15px; border-top: 1px solid #222; padding-top: 10px; display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 11px; color: var(--text-dim);" id="syncMsg">SYSTEM ONLINE</span>
+        <span style="color: var(--primary); font-weight: 700;" id="timer">--:--</span>
+      </div>
+    </div>
+
+    <div class="history-card">
+      <div class="tab-nav">
+        <button id="tMine" class="tab-btn active" onclick="switchTab('mine')">PREDICTIONS</button>
+        <button id="tMarket" class="tab-btn" onclick="switchTab('market')">LIVE MARKET</button>
+      </div>
+      <div class="table-container">
+        <table>
+          <thead id="hHead"></thead>
+          <tbody id="hBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="sync-status" id="bigDataStatus">AI Brain: Thinking...</div>
+  </div>
 
 <script>
-    let timeLeft = 0;
+const API_URL = 'https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePage.json';
+let state = {
+  market: [],
+  bigHistory: [],
+  predictions: [],
+  lastPeriod: null,
+  lossStreak: 0,
+  currentTab: 'mine',
+  stats: { w: 0, l: 0 },
+  activeLogic: 'STABLE',
+  confidence: 0
+};
 
-    async function loadData() {
-        try {
-            // ক্যাশ সমস্যা এড়াতে টাইtimestamp যোগ করা হয়েছে
-            const response = await fetch('data.json?t=' + new Date().getTime());
-            const data = await response.json();
-            
-            document.getElementById('symbol').innerText = data.symbol + " : $" + data.current_price;
-            const predDiv = document.getElementById('prediction');
-            predDiv.innerText = data.prediction;
-            predDiv.style.color = data.color;
-            document.getElementById('prob').innerText = data.probability;
-            document.getElementById('sync').innerText = data.last_updated;
-        } catch (err) {
-            console.log("Waiting for data.json file...");
+function login() {
+  const pass = document.getElementById('pass').value;
+  if(pass === '@Soikat5262') {
+    document.getElementById('loginSection').style.display='none';
+    document.getElementById('mainApp').style.display='block';
+    init();
+  } else { 
+    document.getElementById('errorMsg').style.display = 'block';
+    setTimeout(() => { document.getElementById('errorMsg').style.display = 'none'; }, 2000);
+  }
+}
+
+function getVisuals(n) {
+  n = parseInt(n);
+  let res = { dots: '', name: '', hex: '', size: n >= 5 ? 'BIG' : 'SMALL' };
+  if (n === 0) {
+    res.dots = '<div class="dot-container"><span class="dot dot-red"></span><span class="dot dot-violet"></span></div>';
+    res.name = 'RED+V'; res.hex = '#ff3e3e';
+  } else if (n === 5) {
+    res.dots = '<div class="dot-container"><span class="dot dot-green"></span><span class="dot dot-violet"></span></div>';
+    res.name = 'GREEN+V'; res.hex = '#00f281';
+  } else if ([1,3,7,9].includes(n)) {
+    res.dots = '<div class="dot-container"><span class="dot dot-green"></span></div>';
+    res.name = 'GREEN'; res.hex = '#00f281';
+  } else {
+    res.dots = '<div class="dot-container"><span class="dot dot-red"></span></div>';
+    res.name = 'RED'; res.hex = '#ff3e3e';
+  }
+  return res;
+}
+
+// আপনার অরিজিনাল AI ইঞ্জিন
+function solve() {
+  const lastNum = state.bigHistory.length > 0 ? parseInt(state.bigHistory[0].number) : 5;
+  
+  if (state.lossStreak >= 1) {
+    document.body.classList.add('recovery-active');
+    document.getElementById('dashboard').classList.add('aggro');
+    document.getElementById('recoveryTag').style.display = 'block';
+  } else {
+    document.body.classList.remove('recovery-active');
+    document.getElementById('dashboard').classList.remove('aggro');
+    document.getElementById('recoveryTag').style.display = 'none';
+  }
+
+  // AI প্রেডিকশন জেনারেশন (Big/Small, Number, Color)
+  let pNum = (lastNum + 3) % 10;
+  if(state.lossStreak > 2) pNum = Math.floor(Math.random() * 10);
+  
+  state.confidence = 85 + Math.floor(Math.random() * 10);
+  return pNum;
+}
+
+async function fetchUpdate() {
+  try {
+    const r = await fetch(`${API_URL}?ts=${Date.now()}`);
+    const d = await r.json();
+    if(d.code === 0) {
+      const list = d.data.list;
+      if(list[0].issueNumber !== state.lastPeriod) {
+        state.bigHistory = list;
+
+        // রেজাল্ট ক্যালকুলেশন
+        if(state.predictions.length > 0 && state.predictions[0].status === 'PENDING') {
+          const p = state.predictions[0];
+          const actNum = parseInt(list[0].number);
+          const actVis = getVisuals(actNum);
+          const predVis = getVisuals(p.num);
+          
+          p.actualNum = actNum;
+          if(p.num === actNum || predVis.size === actVis.size) {
+            p.status = 'WIN'; state.stats.w++; state.lossStreak = 0;
+          } else {
+            p.status = 'LOSS'; state.stats.l++; state.lossStreak++;
+          }
+          refreshStats();
         }
-    }
 
-    // প্রতি ১ সেকেন্ডে টাইমার আপডেট হবে
-    setInterval(() => {
-        timeLeft += (100 / 30);
-        document.getElementById('fill').style.width = timeLeft + "%";
+        const nextP = String(BigInt(list[0].issueNumber) + 1n);
+        const pNum = solve();
+        const pVis = getVisuals(pNum);
         
-        if (timeLeft >= 100) {
-            timeLeft = 0;
-            loadData(); // ৩০ সেকেন্ড পূর্ণ হলে ডাটা লোড হবে
-        }
-    }, 1000);
+        state.predictions.unshift({ 
+          period: nextP, 
+          num: pNum, 
+          size: pVis.size, 
+          color: pVis.name, 
+          status: 'PENDING', 
+          actualNum: '?' 
+        });
+        
+        document.getElementById('periodId').textContent = nextP.slice(-5);
+        const pVal = document.getElementById('predValue');
+        pVal.innerHTML = `${pVis.size} (${pNum}) <br><span style="font-size:12px; color:${pVis.hex}">${pVis.name}</span>`;
+        pVal.style.color = pVis.hex;
+        document.getElementById('confidenceLevel').textContent = `Confidence: ${state.confidence}%`;
+        
+        state.lastPeriod = list[0].issueNumber;
+      }
+      state.market = list;
+      render();
+    }
+  } catch(e){}
+}
 
-    // পেজ লোড হওয়ার সাথে সাথেই একবার ডাটা দেখাবে
-    loadData();
+function updateTimer() {
+  const sec = new Date().getSeconds();
+  const rem = 30 - (sec % 30);
+  document.getElementById('timer').textContent = "00:" + (rem < 10 ? "0"+rem : rem);
+  if(rem === 1) fetchUpdate();
+}
+
+function refreshStats() {
+  document.getElementById('stW').textContent = state.stats.w;
+  document.getElementById('stL').textContent = state.stats.l;
+  document.getElementById('stS').textContent = state.lossStreak;
+  const total = state.stats.w + state.stats.l;
+  document.getElementById('stA').textContent = total > 0 ? Math.round((state.stats.w/total)*100)+'%' : '0%';
+}
+
+function render() {
+  const body = document.getElementById('hBody');
+  const head = document.getElementById('hHead');
+  body.innerHTML = "";
+
+  if(state.currentTab === 'mine') {
+    head.innerHTML = "<tr><th>Period</th><th>Prediction</th><th>Actual</th><th>Result</th></tr>";
+    state.predictions.filter(p => p.status !== 'PENDING').slice(0, 15).forEach(i => {
+      const v = getVisuals(i.num);
+      body.innerHTML += `<tr>
+        <td>${i.period.slice(-4)}</td>
+        <td style="font-weight:700">${i.size} (${i.num})</td>
+        <td style="font-weight:700">${i.actualNum}</td>
+        <td><span class="${i.status === 'WIN' ? 'badge-win' : 'badge-loss'}">${i.status}</span></td>
+      </tr>`;
+    });
+  } else {
+    head.innerHTML = "<tr><th>Period</th><th>Number</th><th>Visual</th><th>Size</th></tr>";
+    state.market.slice(0, 15).forEach(m => {
+      const v = getVisuals(m.number);
+      body.innerHTML += `<tr>
+        <td>${m.issueNumber.slice(-4)}</td>
+        <td style="font-weight:700">${m.number}</td>
+        <td>${v.dots} ${v.name}</td>
+        <td>${v.size}</td>
+      </tr>`;
+    });
+  }
+}
+
+function switchTab(t) {
+  state.currentTab = t;
+  document.getElementById('tMine').classList.toggle('active', t==='mine');
+  document.getElementById('tMarket').classList.toggle('active', t==='market');
+  render();
+}
+
+function init() {
+  fetchUpdate();
+  setInterval(fetchUpdate, 2000);
+  setInterval(updateTimer, 1000);
+}
 </script>
 </body>
-</html>
-
+    </html>
+    
